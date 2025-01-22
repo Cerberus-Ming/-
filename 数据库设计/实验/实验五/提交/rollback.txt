@@ -1,0 +1,67 @@
+1.运行SQL script建立一个小的银行数据库，account关系包含两列，用户id和账户余额。有两行数据，定期储蓄账户（id为1）和活期储蓄账户（id为2）。
+create table account
+(
+   id int,
+   balance float,
+   Primary Key(id) 
+);
+insert into account values (1, 105.59 );
+insert into account values (2, 1050.59 );
+
+2.开始一个新的事务。
+begin transaction;
+
+3.查询活期储蓄账户余额，将查询结果拷贝到rollback.txt文档中。
+ select balance
+ from account
+ where id = 2;
+ 查询结果：balance(double precision)
+          1050.59
+
+4.删除定期和活期两个储蓄账户，将SQL语句拷贝到rollback.txt文档中。
+delete from account;
+
+5.查询两个账户的信息，将结果拷贝入rollback.txt文档中。
+select *
+from account;
+查询结果：空
+
+6.回滚事务。
+rollback;
+
+7.查询两个账户的余额，将结果拷贝入rollback.txt文档中。
+select balance
+from account;
+查询结果：balance(double precision)
+            105.59
+            1050.59
+
+8.开始一个新事务。
+begin transaction;
+
+9.删除定期储蓄账户，将SQL语句拷贝入rollback.txt文档中。
+delete *
+from account
+where id=1;
+
+10.查询表account的所有行，将结果拷贝入rollback.txt文档中。
+select *
+from acount;
+查询结果：id([PK] integer) balance(double precision)
+            2             1050.59
+
+11.提交事务。
+commit;
+
+12.尝试回滚刚刚提交的事务。查询表中存储的值。解释说明事务提交和回滚产生的不同影响。将结果写入rollback.txt文档中。
+rollback;
+运行结果：报错，报错信息如下：
+警告:  没有事物在运行中
+        query result with 1 row discarded.
+
+查询成功但无结果，耗时: 12 毫秒(ms)。
+
+解释说明事务提交和回滚产生的不同影响：
+commit会保存从“begin transaction”（开始事务）到“commit transaction”（确认事务）之间的所有操作；
+rollback会撤销将从“begin transaction”（开始事务）到“rollback transaction”（回滚事务）之间的所有操作。
+在此次回滚前，所有事务已经被提交，所以当前没有正在进行的事务了，再进行回滚操作就会报错。

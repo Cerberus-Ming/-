@@ -1,0 +1,143 @@
+1.运行SQL script建立一个小的银行数据库，account关系包含两列，用户id和账户余额。有两行数据，定期储蓄账户（id为1）和活期储蓄账户（id为2）。
+--drop table account;
+create table account
+(
+   id int,
+   balance float,
+   Primary Key(id) 
+);
+
+insert into account values (1, 105.59 );
+insert into account values (2, 1050.59 );
+
+2.开始两个PostgreSQL窗口会话。
+略
+
+3.两个窗口都开始一个新事务。
+窗口一：
+begin transaction;
+窗口二：
+begin transaction;
+
+4.第一个窗口，将活期储蓄账户余额更改为455.66。
+窗口一：
+update account
+set balance=455.66
+where id=2;
+
+5.第一个窗口，查询account关系所有行，结果拷贝入isolation.txt文档中，用序号标识出数据来自于窗口一。
+窗口一：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+1                   105.59
+2                   455.66
+
+6.第二个窗口，查询account关系所有行，结果拷贝入isolation.txt文档中，用序号标识出数据来自于窗口二。
+窗口二：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+1                   105.59
+2                   1050.59
+
+7.第一个窗口，提交事务。
+窗口一：
+commit;
+
+8.第二个窗口，查询account表所有行，结果拷贝入isolation.txt文档中，用序号标识出数据来自于窗口二。窗口一的数据更新是否生效？为什么？将解释部分写入isolation.txt文档中。
+窗口二：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+1                   105.59
+2                   455.66
+窗口一的数据更新生效。解释：PostgreSQL默认的事务隔离等级是读已提交。因此，在窗口一提交事务之后，窗口二再次读取就可以正确读取到之前窗口一修改的数据。
+
+9.第二个窗口，提交事务。
+窗口一：
+commit;
+
+10.两个窗口都开始一个新事务。
+窗口一：
+begin transaction;
+窗口二：
+begin transaction;
+
+11.第二个窗口设置事务隔离等级为串行化，将SQL语句写入isolation.txt文档中。
+窗口二：
+set transaction isolation level serializable;
+
+12.第一个窗口，设置活期储蓄账户余额为1400。
+窗口一：
+update account
+set balance = 1400.00
+where id = 2;
+
+13.第二个窗口，设置定期储蓄账户余额为1。
+窗口二：
+update account
+set balance = 1
+where id = 1;
+
+14.在两个窗口内查询account关系的所有行。用序号标识出数据来源于窗口一或二。
+窗口一：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+1                   105.59
+2                   1400
+
+窗口二：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+2                   455.66
+1                   1
+
+15.第一个窗口，提交事务。
+窗口一：commit transaction;
+
+16.第二个窗口，查询account关系所有行。活期储蓄账户值是否更新？为什么？第一个窗口的定期储蓄账户值是否更新？为什么？将解释语句写入isolation.txt文档中。
+窗口二：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+2                   455.66
+1                   1
+窗口二活期储蓄账户值没有更新。解释：窗口二的事务隔离等级为串行化，读不到其他事务已提交的修改数据。
+
+窗口一：
+select *
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+1                   105.59
+2                   1400
+窗口一活期储蓄账户值没有更新。解释：窗口二的事务还未提交，窗口一事务默认隔离等级是读已提交，因此窗口一读取到的储蓄账户值和上次读取到的相同。
+
+17.第二个窗口提交事务。在两个窗口查询数据。将结果拷贝入isolation.txt文档中，用序号标识出数据来源，并解释产生为何会产生此结果。将答案拷贝入isolation.txt文档中。、
+窗口二：
+commit;
+select * 
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+2                   1400
+1                   1
+
+窗口一：
+select * 
+from account;
+查询结果：
+id([PK] integer)    balance(double precision)
+2                   1400
+1                   1
+
+解释：此时，两个窗口所有操作均已经成功提交，所以两个窗口查询的结果是一样的，为两个事务修改后的结果。

@@ -1,0 +1,96 @@
+1.运行SQL script建立一个小的银行数据库，account关系包含两列，用户id和账户余额。有两行数据，定期储蓄账户（id为1）和活期储蓄账户（id为2）。
+drop table account;
+create table account
+(
+   id int,
+   balance float,
+   Primary Key(id) 
+);
+
+insert into account values (1, 105.59);
+insert into account values (2, 1050.59);
+
+2.开始两个PostgreSQL窗口会话。
+略
+
+3.两个窗口都开始一个新事务。
+窗口一：begin transaction;
+窗口二：begin transaction;
+
+4.第二个窗口中将活期储蓄账户余额更新为455.75.
+窗口二：
+update account
+set balance = 455.75
+where id = 2;
+
+5.第一个窗口中将活期储蓄账户余额更新为1400，更新能否成功，解释说明，将答案写入deadlock.txt文档中。
+窗口一：
+update account
+set balance = 1400.00
+where id = 2;
+更新不成功，显示正在等待查询完成。解释：第二个窗口的事务已对该值进行修改，获得了锁，且尚未提交或回滚，未释放锁；第一个窗口的事务在等待锁，形成了死锁。
+
+6.第二个窗口提交事务，观察第一个窗口变化，解释说明，答案写入deadlock.txt文档中。
+窗口二：
+commit;
+
+窗口一：
+窗口一对应的事务的更新操作随后执行成功，显示信息如下：
+UPDATE 1
+耗时1 分 13 秒 成功返回查询。
+
+解释：窗口二的事务提交后，会释放锁，窗口一的更新就被执行了。
+
+7.第一个窗口提交事务。
+窗口二：
+commit;
+
+8.两个窗口开始一个新事务。
+窗口一：begin transaction;
+窗口二：begin transaction;
+
+9.第二个窗口中将定期储蓄账户余额更新为2400.
+窗口二：
+update account
+set balance = 2400.00
+where id = 1;
+
+10.第一个窗口中将活期储蓄账户余额更新为2000.
+窗口一：
+update account
+set balance = 2000.00
+where id = 2;
+
+11.第一个窗口中将定期储蓄账户余额更新为1400.
+窗口一：
+update account
+set balance = 1400.00
+where id = 1;
+
+12.第二个窗口中将活期储蓄账户余额更新为1000.50.
+窗口二：
+update account
+set balance = 1000.50
+where id = 2;
+
+13.观察结果，试着解释原因。结果写入deadlock.txt文档中。
+窗口一：
+UPDATE 1
+
+耗时53 毫秒 成功返回查询。
+
+窗口二：产生死锁
+
+解释： 9、10中两个事务各对一属性上锁，11、12中，两事务均等待另一属性的解锁以执行事务的剩余操作，陷入死锁。而在产生死锁时，系统会撤销代价最小的事务，因此事务一最终成功返回查询。
+
+14.在每个窗口中查询表的数据，你观察到了什么？试做说明，将答案写入deadlock.txt文档中。
+窗口一查询结果：
+id([PK] integer)    balance(double precision)
+2                           2000
+1                           1400
+
+窗口二查询结果：
+    ERROR: 错误:  当前事务被终止, 事务块结束之前的查询被忽略
+SQL 状态: 25P02
+
+产生死锁时，窗口一中的事务得到撤销，因此可以继续查询。窗口二中事务因为产生了死锁，需先结束事务，否则无法继续查询。

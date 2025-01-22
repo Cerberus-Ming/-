@@ -1,0 +1,152 @@
+第一步：（创建强实体表，将复合属性拆分）
+Book(Title, ISBN, Edition, PublishDate, Price, BookDescription)
+PK(ISBN)
+
+Author(Author Name, Atuhor_id)
+PK(Author_id)
+
+Publisher(Publisher_id, Publisher Name, Address)
+PK(Publisher_id)
+AK(PublisherName, Address)(没有一家打印店有相同的地址和名字)
+
+Customer(Customer_id, CustomerName, MailingAddress, Credit Card Number and Expiration Date, PhoneNumber, EmailAddress)
+PK(Customer_id)
+AK(Credit Card Number and Expiration Date)
+
+Shipment(ShipmentDate, TrackingNumber, ExpectedDate)
+PK(Tracking Number)
+
+Orders(OrderNumber, MailingAddress, Method, DateAndTimeOrder, ShipmentPrice, Tax, TotalBookPrice)
+PK(Order Number)
+
+Promotion(Promotion_id, Discount, StartDate, EndDate)
+PK(Promotion_id)
+
+Category(Category_id, CategoryName)
+PK(Category_id)
+
+第二步：创建有1:1关联关系的弱实体的表，将关联实体的主键引入为外键
+本实验中的实例中不存在仅与实体关系为1：1的弱实体类型
+
+第三步：为有1:N，M：N关联关系的弱实体创建表，1:N则在多方引入外键，M:N则创建新表，引入双方的主键作为外键
+LineItem（ISBN, OrderNumber, TrackingNumber, TotalPrice, Quantity）
+PK(ISBN, OrderNumber)
+FK(ISBN)→Book(ISBN)
+FK(OrderNumber)→Order(OrderNumber)
+FK(TrackingNumber)→Shipment(TrackingNumber)
+
+第四步：有1:1关联关系的强实体，在全部参与方中引入外键
+实例中不存在两个实体间的1：1关系类型
+
+第五步（一对多）：有1:N关联关系的强实体，在多方引入一方的主键作为外键
+Book(Title, ISBN, Edition, PublishDate, Price, BookDescription, Publisher_id)
+PK(ISBN)
+FK(Publisher_id)→Publisher(Publisher_id)
+
+Orders(OrderNumber, MailingAddress, Method, DateAndTimeOrder, ShipmentPrice, Tax, TotalBookPrice, Customer_id)
+PK(OrderNumber)
+FK(Customer_id)→Customer(Customer_id)
+
+Shipment(ShipmentDate, TrackingNumber, ExpectedDate, OrderNumber) 
+PK(TrackingNumber) 
+FK(OrderNumber) -> Order(OrderNumber) 
+
+Category(Category_id, CategoryName, Super_id)
+PK(Category_id)
+FK(Super_id)→Category(Category_id)
+
+第六步：有多对多关联关系的强实体，创建新表，将关联双方的主键引入，作为强联系的复合主键
+Book_Author:
+		Write(ISBN, Author_id)
+		PK(ISBN, Author_id)
+		FK(ISBN)→Book(ISBN)
+		FK(Author_id)→Author(Author_id)
+
+Book_Category:
+		BelongTo(ISBN, Category_id)
+		PK(ISBN, Category_id)
+		FK(ISBN)→Book(ISBN)
+		FK(Category_id)→Category(Category_id)
+
+Book_Promotion:
+		Promote(ISBN, Promotion_id)
+		PK(ISBN, Promotion_id)
+		FK(ISBN)→Book(ISBN)
+		FK(Promotion_id)→Promotion(Promotion_id)
+
+第七步：对多值属性，创建新表，把原来表的主键作为一列引入，然后再引入多值属性，把原来表的主键和复合属性作为新表的复合主键
+TotalBookPrice(ISBN, BookPrice, Quantity, OrderNumber)
+PK(ISBN, OrderNumber)
+FK(OrderNumber)→Order(OrderNumber)
+FK(ISBN)→Book(ISBN)
+
+Duration(StartDate, EndDate, Promotion_id)
+PK(StratDate, EndDate, Promotion_id)
+FK(Promotion_id)→Promotion(Promotion_id)
+
+第八步：对于“独生子”类型的概化，直接创建一个新表，引入父类的属性和子类独有的属性
+本实验的实例中不存在子类实体。
+
+第九步：对于“一生多”类型的概化，为父类创建一个表，为子类分别创建一个表，引入父类的主键和每个子类的独特的属性
+本实验的实例中不存在子类实体。
+
+最终关系模型的建立表：
+
+Book(Title, ISBN, Edition, PublishDate, Price, BookDescription, Publisher_id)
+PK(ISBN)
+FK(Publisher_id)→Publisher(Publisher_id)
+
+Author(Author Name, Atuhor_id)
+PK(Author_id)
+
+Publisher(Publisher_id, Publisher Name, Address)
+PK(Publisher_id)
+AK(PublisherName, Address)
+
+Customer(Customer_id, CustomerName, MailingAddress, Credit Card Number and Expiration Date, PhoneNumber, EmailAddress)
+PK(Customer_id)
+AK(Credit Card Number and Expiration Date)
+
+Shipment(ShipmentDate, TrackingNumber, ExpectedDate, OrderNumber) 
+PK(TrackingNumber) 
+FK(OrderNumber) -> Order(OrderNumber) 
+
+Orders(OrderNumber, MailingAddress, Method, DateAndTimeOrder, ShipmentPrice, Tax, Customer_id)
+PK(OrderNumber)
+FK(Customer_id)→Customer(Customer_id)
+
+Promotion(Promotion_id, Percentage Discount, Duration)
+PK(Promotion_id)
+
+Category(Category_id, CategoryName, Super_id)
+PK(Category_id)
+FK(Super_id)→Category(Category_id)
+
+LineItem(ISBN, OrderNumber, TrackingNumber, TotalPrice, Quantity)
+PK(ISBN, OrderNumber)
+FK(ISBN)→Book(ISBN)
+FK(OrderNumber)→Order(OrderNumber)
+FK(TrackingNumber)→Shipment(TrackingNumber)
+
+Write(ISBN, Author_id)
+PK(ISBN, Author_id)
+FK(ISBN)→Book(ISBN)
+FK(Author_id)→Author(Author_id)
+
+BelongTo(ISBN, Category_id)
+PK(ISBN, Category_id)
+FK(ISBN)→Book(ISBN)
+FK(Category_id)→Category(Category_id)
+
+Promote(ISBN, Promotion_id)
+PK(ISBN, Promotion_id)
+FK(ISBN)→Book(ISBN)
+FK(Promotion_id)→Promotion(Promotion_id)
+
+TotalBookPrice(BookPrice, Quantity, OrderNumber)
+PK(BookPrice, Quantity, OrderNumber)
+FK(OrderNumber)→Order(OrderNumber)
+
+Duration(StartDate, EndDate, Promotion_id)
+PK(StratDate, EndDate, Promotion_id)
+FK(Promotion_id)→Promotion(Promotion_id)

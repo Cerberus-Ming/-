@@ -1,0 +1,111 @@
+1、实体
+
+Book Title(强实体)
+属性:        
+	Author      多值属性
+                Title          
+	ISBN	主键
+	Edition	 
+	Date of Publication    
+	Price	 
+	Book Description  
+
+Category（强实体）
+属性：
+	Category ID	主键
+	Category Name	
+
+Publisher（强实体）
+属性：
+	Publisher ID	主键
+	Publisher Name	
+	Address		多值属性（这里认为出版社可能有多个分部，从而有多个地址）
+
+Customer（强实体）
+属性：
+	Customer ID	主键
+	Name		复合属性
+	Mailing Address	多值属性（用户可能有多个收件地址）
+	Credit Card	多值属性
+	Phone Number	多值属性
+	Email Address	多值属性
+
+Order（强实体）
+属性：
+	Order Number	主键
+	Mailing Address	单值属性（每个订单只能有一个收件地址）
+	Credit Card	单值属性（每个订单只能由一张信用卡支付 ）
+	Method of Shipment 	
+	Shipping Date	
+	Date and Time of Order 	
+	
+
+Price of the Order（弱实体）必须依附于Order
+属性：
+	Order Number	主键		
+	Shipping Cost			
+	Tax	
+
+Fulfiled Order（弱实体）必须依附于Order 
+属性：
+	Order Number	主键
+	Date of Shipment	
+	Tracking Number	
+	Date of Expected Delivery	
+	Titles Shipped and their Quantity			
+
+Promotion（强实体）
+属性：
+	Promotion ID	主键
+	Books being Promoted		
+	Percentage Discount Points	
+	Duration of Promotion	复合属性
+
+OrderItem（弱实体）必须依附于Book Title和Order
+属性：
+	Order Number	主键
+	ISBN	主键
+	Price
+	Quantity Purchased
+
+ps:“桥接”实体OrderItem，这个实体在需求描述中没有明确提及，是我根据需求加的。
+OrderItem(orderNumber,ISBN,price,quantityPurchased)
+该实体关联了图书信息、订单信息和物流信息
+
+2、关系
+
+Book——Publisher（Publisher publish Book）
+基数约束：1:N，同一本书一般只有一个出版商，一个出版商可以出版多本书
+参与约束：书是全部参与，出版商是部分参与
+
+Category——Category（Category has Category）
+基数约束：1:N，一个目录下可以有很多子目录
+参与约束：父目录是部分参与，子目录是全部参与
+
+Book Title——Category（Book belong to Category）
+基数约束：N:N，一个目录下可以有很多书，一本书也可以属于多个目录
+参与约束：书是全部参与，目录也是全部参与
+
+Promotion——Book Title（Promotion promote Book）
+基数约束：N:N，一次促销可以包括很多书，一本书能参与多种促销
+参与约束：书是部分参与，促销是全部参与
+
+OrderItem——Book Tittle （OrderItem  include Book Title）
+基数约束：1:1，一本书包含在一个OrderItem里，一个OrderItem也只能有一本书
+参与约束：OrderItem必须全部参与，书是部分参与
+
+Fulfilled Order——OrderItem（Fulfilled Order contain OrderItem）
+基数约束：1:N一个OrderItem只能属于一个物品物流，一个物品物流可以包含多个OrderItem
+参与约束：物品物流全部参与，OrderItem部分参与（因为有的还没发货）
+
+Customer——Order（Customer order Order）
+基数约束：1:N，一个Customer可以有多个订单，一个订单只能属于一个Customer
+参与约束：两者都是全部参与
+
+Order——Price of Order（Order has1 Price of Order）
+基数约束：1:1，一个Oreder只有唯一Price
+参与约束：两者都是全部参与
+
+Price of the Order——OrderItem （Price of the Order has OrderItem）
+基数约束：1:N，一个OrderItem只能属于一个订单价目，一个订单价目可以包含多个订单项
+参与约束：两者都是全部参与

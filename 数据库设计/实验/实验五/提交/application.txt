@@ -1,0 +1,103 @@
+1、
+Scenario A 的问题：
+（1） 隔离等级不正确，导致各个事务看到的数据不一致。
+当一个事务更新时，其他事务就必须等待先行事务释放当前锁，还有可能使得数据更新丢失。
+（2） 确认信息位置不正确，所有的确认信息必须在事务成功提交后显示。
+用户可能在事务没有结束前就收到了操作完成的确认信息，此时若事务发生回滚，事务将会被撤销，但是用户以为已经执行成功，会存在问题。所以，所有的确认信息必须在事务成功提交后进行显示。
+（3） 事务边界不正确。
+需要调整事务边界以允许所有用户的最大吞吐量；且用户获得一个数据的锁时，需要等到事务结束的时候才能够释放锁，以确保数据的正确性。
+（4） 在事务边界内等待用户输入。
+这会导致较差的吞吐量，其他用户的事务可能在等待该事务释放数据锁。
+
+Scenario B 的问题：
+（1） 隔离等级不正确
+读提交的隔离级别可能会造成不可重复读和幻读（但在这个事务中没有幻读），从而导致更新丢失或错误。
+（2）  在事务边界内等待用户输入。
+这会导致较差的吞吐量，其他用户的事务可能在等待该事务释放数据锁。
+（3） 确认信息位置不正确，所有的确认信息必须在事务成功提交后显示。
+用户可能在事务没有结束前就收到了操作完成的确认信息，此时若事务发生回滚，事务将会被撤销，但是用户以为已经执行成功，会存在问题。所以，所有的确认信息必须在事务成功提交后进行显示。
+（4）不正确的事务边界
+事务边界过大，包含了多个SQL请求，会出现数据锁造成的资源访问互斥的概率会大大增加。
+
+Scenario C 的问题：
+（1） 隔离等级不正确
+串行化的隔离等级过于严格。根据Section C的操作序列，不存在insert或者delete操作，因此不会发生幻读。采用可重复读取隔离等级就足够了。
+（2） 在事务边界内等待用户输入。
+这会导致较差的吞吐量，其他用户的事务可能在等待该事务释放数据锁。
+
+正确顺序：
+Willian
+ATM prompts user for operation.
+William Chooses Deposit into Savings.
+ATM prompts user for amount.
+William enters 400.
+
+Begin transaction(serializable isolation level)
+Select balance of savings
+savings_balance = saving_balance + $400
+Update savings balance in database.
+End Transaction
+
+ATM displays confirmation fo deposit.
+ATM propmpts user for operation.
+William chooses transfer from checking to savings.
+ATM prompts user for amount.
+William enters 300.
+
+Begin transaction (serializable isolation level)
+Select the checking balance.
+checking_balance = checking_balance -$300
+Select the savings balance.
+savings_balance = savings_balance +$300
+
+Update savings balance in database.
+Update checking balance in database.
+End Trensaction
+ATM displays confirmation of transfer.
+ATM Prompt user for operation.
+William chooses no more operations.
+
+Julie
+ATM prompts user for operation.
+Julie Chooses Deposit into Checking.
+ATM Prompts user for amount.
+Julie enters 500.
+
+Begin transaction (serializable isolation level)
+Select balance of checking 
+checking_balance = checking_balance + $500 
+Update checking balance in database.
+End Transaction 
+ATM displays confirmation of deposit.
+ATM prompts user for operation.
+Julie chooses withdrawal from savings.
+ATM prompts user for amount.
+Julie enters 100.
+
+Begin transaction (serializable isolation level)
+Select the savings checking balance in database.
+savings_balance = savings_balance - $100 
+Update savings balance in database. 
+End Transaction 
+
+ATM displays confirmation of withdrawal.
+ATM Prompt user for operation.
+Julie chooses no more operations. 
+
+
+2、
+1）解释事务何时开始，何时结束。
+事务从用户输入要购买的座位号后开始，从购票流程完成后结束。
+System.out.println( "Please enter the number of seats that you want to buy: " ); 
+		numseats = Integer.parseInt( keyIn.readLine() ); 
+		// 开始一个新事务 
+		stmt.executeUpdate( "Begin Work" ); 
+		// 给事务设置隔离等级 
+		stmt.executeUpdate( "set transaction isolation level serializable" ); 
+		// 选取座位
+		sqlquery = new String( "select available_standard_seats from showing where movie_id = " + movie_id ); 
+		rset = stmt.executeQuery( sqlquery ); 
+2）解释为何如此设置事务边界。
+这样设置可以保证查询（和修改）都由事务边界保护。同时避免将等待用户输入放入事务边界内，降低吞吐量。
+3）解释为何你的隔离等级能够确保所有用户看到一致的数据视图。
+事务的隔离级别应设置为可串行化。如果事务以更宽松的隔离级别（如读提交）运行，那么多个事务可能会请求超出剩余座位总数的座位，导致错误。
